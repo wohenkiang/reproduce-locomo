@@ -340,13 +340,13 @@ def init_hf_model(args):
     else:
         raise ValueError
     
-    hf_token = os.environ['HF_TOKEN']
-    huggingface_hub.login('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')
+    hf_token = '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'
+    huggingface_hub.login(hf_token)
 
     if args.use_4bit:
 
         print("Using 4-bit inference")
-        tokenizer = AutoTokenizer.from_pretrained(model_name, token='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')
+        tokenizer = AutoTokenizer.from_pretrained(model_name, token=hf_token)
         tokenizer.pad_token_id = tokenizer.eos_token_id    # for open-ended generation
 
         if 'gemma' in args.model:
