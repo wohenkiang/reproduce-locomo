@@ -341,7 +341,6 @@ def init_hf_model(args):
         raise ValueError
     
     hf_token = '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'
-    huggingface_hub.login(hf_token)
 
     if args.use_4bit:
 
