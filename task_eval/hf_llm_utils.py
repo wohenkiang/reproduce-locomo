@@ -346,7 +346,7 @@ def init_hf_model(args):
     if args.use_4bit:
 
         print("Using 4-bit inference")
-        tokenizer = AutoTokenizer.from_pretrained(model_name, token=hf_token)
+        tokenizer = AutoTokenizer.from_pretrained(model_name)
         tokenizer.pad_token_id = tokenizer.eos_token_id    # for open-ended generation
 
         if 'gemma' in args.model:
