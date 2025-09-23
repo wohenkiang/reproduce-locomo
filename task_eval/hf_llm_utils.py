@@ -372,7 +372,7 @@ def init_hf_model(args):
             else:
                 model = AutoModelForCausalLM.from_pretrained(model_name,
                                                              quantization_config=bnb_config,
-                                                             device_map="auto",
+                                                             # device_map="auto",
                                                              trust_remote_code=True)
 
         else:
