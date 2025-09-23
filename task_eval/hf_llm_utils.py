@@ -339,7 +339,7 @@ def init_hf_model(args):
     else:
         raise ValueError
 
-    hf_token = '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'
+    hf_token = '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'
     print("here!!!!!")
     print(hf_token)
     huggingface_hub.login(hf_token)
