@@ -1,5 +1,6 @@
 import sys
 from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import random
@@ -18,25 +19,23 @@ from transformers import (
 import torch
 import huggingface_hub
 
-
-MAX_LENGTH={'llama2': 4096,
-            'llama2-70b': 4096,
-            'llama2-chat': 4096,
-            'llama2-chat-70b': 4096,
-            'llama3-chat-70b': 4096,
-            'gpt-3.5-turbo-16k': 16000,
-            'gpt-3.5-turbo': 4096,
-            'gemma-7b-it': 8000,
-            'mistral-7b-128k': 128000,
-            'mistral-7b-4k': 4096,
-            'mistral-7b-8k': 8000,
-            'mistral-instruct-7b-4k': 4096,
-            'mistral-instruct-7b-8k': 8000,
-            'mistral-instruct-7b-32k-v2': 8000,
-            'mistral-instruct-7b-8k-new': 8000,
-            'mistral-instruct-7b-32k': 32000,
-            'mistral-instruct-7b-128k': 128000}
-
+MAX_LENGTH = {'llama2': 4096,
+              'llama2-70b': 4096,
+              'llama2-chat': 4096,
+              'llama2-chat-70b': 4096,
+              'llama3-chat-70b': 4096,
+              'gpt-3.5-turbo-16k': 16000,
+              'gpt-3.5-turbo': 4096,
+              'gemma-7b-it': 8000,
+              'mistral-7b-128k': 128000,
+              'mistral-7b-4k': 4096,
+              'mistral-7b-8k': 8000,
+              'mistral-instruct-7b-4k': 4096,
+              'mistral-instruct-7b-8k': 8000,
+              'mistral-instruct-7b-32k-v2': 8000,
+              'mistral-instruct-7b-8k-new': 8000,
+              'mistral-instruct-7b-32k': 32000,
+              'mistral-instruct-7b-128k': 128000}
 
 QA_PROMPT = """
 Based on the above conversations, write a short answer for the following question in a few words. Do not write complete and lengthy sentences. Answer with exact words from the conversations whenever possible.
@@ -63,7 +62,6 @@ If you don't know the answer to a question, please don't share false information
 {} [/INST]
 """
 
-
 LLAMA3_CHAT_SYSTEM_PROMPT = """
 <s>[INST] <<SYS>>
 You are a helpful, respectful and honest assistant whose job is to understand the following conversation and answer questions based on the conversation.
@@ -72,7 +70,6 @@ If you don't know the answer to a question, please don't share false information
 
 {} [/INST]
 """
-
 
 MISTRAL_INSTRUCT_SYSTEM_PROMPT = """
 <s>[INST] {} [/INST]
@@ -89,89 +86,91 @@ ANS_TOKENS_PER_QUES = 50
 
 
 def run_mistral(pipeline, question, data, tokenizer, args):
-
-    question_prompt =  QA_PROMPT.format(question)
-    query_conv = get_input_context(data['conversation'], MISTRAL_INSTRUCT_SYSTEM_PROMPT.format(question_prompt), tokenizer, args)
+    question_prompt = QA_PROMPT.format(question)
+    query_conv = get_input_context(data['conversation'], MISTRAL_INSTRUCT_SYSTEM_PROMPT.format(question_prompt),
+                                   tokenizer, args)
 
     # without chat_template
     # query = MISTRAL_INSTRUCT_SYSTEM_PROMPT.format(query_conv + '\n\n' + question_prompt)
     # with chat template
-    query = tokenizer.apply_chat_template([{"role": "user", "content": query_conv + '\n\n' + question_prompt}], tokenize=False, add_generation_prompt=True)
+    query = tokenizer.apply_chat_template([{"role": "user", "content": query_conv + '\n\n' + question_prompt}],
+                                          tokenize=False, add_generation_prompt=True)
 
     sequences = pipeline(
-                        query,
-                        # max_length=8000,
-                        max_new_tokens=args.batch_size*ANS_TOKENS_PER_QUES,
-                        pad_token_id=tokenizer.pad_token_id,
-                        eos_token_id=tokenizer.eos_token_id,
-                        do_sample=True,
-                        top_k=10,
-                        temperature=0.4,
-                        top_p=0.9,
-                        return_full_text=False,
-                        num_return_sequences=1,
-                        )
+        query,
+        # max_length=8000,
+        max_new_tokens=args.batch_size * ANS_TOKENS_PER_QUES,
+        pad_token_id=tokenizer.pad_token_id,
+        eos_token_id=tokenizer.eos_token_id,
+        do_sample=True,
+        top_k=10,
+        temperature=0.4,
+        top_p=0.9,
+        return_full_text=False,
+        num_return_sequences=1,
+    )
     return sequences[0]['generated_text']
 
 
 def run_gemma(pipeline, question, data, tokenizer, args):
-
-    question_prompt =  QA_PROMPT.format(question)
+    question_prompt = QA_PROMPT.format(question)
     query_conv = get_input_context(data['conversation'], GEMMA_INSTRUCT_PROMPT.format(question_prompt), tokenizer, args)
 
     # without chat_template
     # query = MISTRAL_INSTRUCT_SYSTEM_PROMPT.format(query_conv + '\n\n' + question_prompt)
     # with chat template
-    query = tokenizer.apply_chat_template([{"role": "user", "content": query_conv + '\n\n' + question_prompt}], tokenize=False, add_generation_prompt=True)
+    query = tokenizer.apply_chat_template([{"role": "user", "content": query_conv + '\n\n' + question_prompt}],
+                                          tokenize=False, add_generation_prompt=True)
 
     sequences = pipeline(
-                        query,
-                        # max_length=8000,
-                        max_new_tokens=args.batch_size*ANS_TOKENS_PER_QUES,
-                        pad_token_id=tokenizer.pad_token_id,
-                        eos_token_id=tokenizer.eos_token_id,
-                        do_sample=True,
-                        top_k=10,
-                        temperature=0.4,
-                        top_p=0.9,
-                        return_full_text=False,
-                        num_return_sequences=1,
-                        )
+        query,
+        # max_length=8000,
+        max_new_tokens=args.batch_size * ANS_TOKENS_PER_QUES,
+        pad_token_id=tokenizer.pad_token_id,
+        eos_token_id=tokenizer.eos_token_id,
+        do_sample=True,
+        top_k=10,
+        temperature=0.4,
+        top_p=0.9,
+        return_full_text=False,
+        num_return_sequences=1,
+    )
     return sequences[0]['generated_text']
 
 
 def run_llama(pipeline, question, data, tokenizer, args):
-
-    question_prompt =  QA_PROMPT.format(question)
-    query_conv = get_input_context(data['conversation'], LLAMA3_CHAT_SYSTEM_PROMPT.format(question_prompt), tokenizer, args)
+    question_prompt = QA_PROMPT.format(question)
+    query_conv = get_input_context(data['conversation'], LLAMA3_CHAT_SYSTEM_PROMPT.format(question_prompt), tokenizer,
+                                   args)
 
     # without chat_template
     # query = MISTRAL_INSTRUCT_SYSTEM_PROMPT.format(query_conv + '\n\n' + question_prompt)
     # with chat template
-    query = tokenizer.apply_chat_template([{"role": "system", "content": "You are a helpful, respectful and honest assistant whose job is to understand the following conversation and answer questions based on the conversation. If you don't know the answer to a question, please don't share false information."},
-                                           {"role": "user", "content": query_conv + '\n\n' + question_prompt}], tokenize=False, add_generation_prompt=True)
+    query = tokenizer.apply_chat_template([{"role": "system",
+                                            "content": "You are a helpful, respectful and honest assistant whose job is to understand the following conversation and answer questions based on the conversation. If you don't know the answer to a question, please don't share false information."},
+                                           {"role": "user", "content": query_conv + '\n\n' + question_prompt}],
+                                          tokenize=False, add_generation_prompt=True)
 
     sequences = pipeline(
-                        query,
-                        # max_length=8000,
-                        max_new_tokens=args.batch_size*ANS_TOKENS_PER_QUES,
-                        pad_token_id=tokenizer.pad_token_id,
-                        eos_token_id=tokenizer.eos_token_id,
-                        do_sample=True,
-                        top_k=10,
-                        temperature=0.4,
-                        top_p=0.9,
-                        return_full_text=False,
-                        num_return_sequences=1,
-                        )
+        query,
+        # max_length=8000,
+        max_new_tokens=args.batch_size * ANS_TOKENS_PER_QUES,
+        pad_token_id=tokenizer.pad_token_id,
+        eos_token_id=tokenizer.eos_token_id,
+        do_sample=True,
+        top_k=10,
+        temperature=0.4,
+        top_p=0.9,
+        return_full_text=False,
+        num_return_sequences=1,
+    )
     return sequences[0]['generated_text']
 
 
 def get_chatgpt_summaries(ann_file):
-
     data = json.load(open(ann_file))
     conv = ''
-    for i in range(1,20):
+    for i in range(1, 20):
         if 'session_%s' % i in data:
             conv = conv + data['session_%s_date_time' % i] + '\n'
             for dialog in data['session_%s' % i]:
@@ -179,7 +178,6 @@ def get_chatgpt_summaries(ann_file):
 
 
 def get_input_context(data, question_prompt, encoding, args):
-
     # get number of tokens from question prompt
     question_tokens = len(encoding.encode(question_prompt))
 
@@ -203,8 +201,10 @@ def get_input_context(data, question_prompt, encoding, args):
                 turn += '\n'
 
                 # get an approximate estimate of where to truncate conversation to fit into contex window
-                new_tokens = len(encoding.encode('DATE: ' + data['session_%s_date_time' % i] + '\n' + 'CONVERSATION:\n' + turn))
-                if (start_tokens + new_tokens + total_tokens + question_tokens) < (MAX_LENGTH[args.model]-(ANS_TOKENS_PER_QUES*args.batch_size)): # if new turns still fit into context window, add to query
+                new_tokens = len(
+                    encoding.encode('DATE: ' + data['session_%s_date_time' % i] + '\n' + 'CONVERSATION:\n' + turn))
+                if (start_tokens + new_tokens + total_tokens + question_tokens) < (MAX_LENGTH[args.model] - (
+                        ANS_TOKENS_PER_QUES * args.batch_size)):  # if new turns still fit into context window, add to query
                     query_conv = turn + query_conv
                     total_tokens += len(encoding.encode(turn))
                 else:
@@ -213,17 +213,16 @@ def get_input_context(data, question_prompt, encoding, args):
                     break
 
             query_conv = '\nDATE: ' + data['session_%s_date_time' % i] + '\n' + 'CONVERSATION:\n' + query_conv
-        
+
         if stop:
             break
-    
+
     query_conv = start_prompt + query_conv
 
     return query_conv
 
 
 def get_hf_answers(in_data, out_data, args, pipeline, model_name):
-
     if 'mistral' in model_name:
         encoding = AutoTokenizer.from_pretrained(model_name)
     else:
@@ -238,10 +237,10 @@ def get_hf_answers(in_data, out_data, args, pipeline, model_name):
         for i in range(batch_start_idx, batch_start_idx + args.batch_size):
 
             # end if all questions have been included
-            if i>=len(in_data['qa']):
+            if i >= len(in_data['qa']):
                 break
             qa = in_data['qa'][i]
-            # skip if already predicted and overwrite is set to False            
+            # skip if already predicted and overwrite is set to False
             if '%s_prediction' % args.model not in qa or args.overwrite:
                 include_idxs.append(i)
             else:
@@ -269,7 +268,6 @@ def get_hf_answers(in_data, out_data, args, pipeline, model_name):
         if questions == []:
             continue
 
-
         if args.batch_size == 1:
 
             if 'mistral' in model_name:
@@ -280,7 +278,7 @@ def get_hf_answers(in_data, out_data, args, pipeline, model_name):
                 answer = run_gemma(pipeline, questions[0], in_data, encoding, args)
             else:
                 raise NotImplementedError
-            
+
             print(questions[0], answer)
 
             # post process answers, necessary for Adversarial Questions
@@ -293,17 +291,18 @@ def get_hf_answers(in_data, out_data, args, pipeline, model_name):
                 else:
                     answer = cat_5_answers[0]['b']
             else:
-                answer = answer.lower().replace('(a)', '').replace('(b)', '').replace('a)', '').replace('b)', '').replace('answer:', '').strip()
+                answer = answer.lower().replace('(a)', '').replace('(b)', '').replace('a)', '').replace('b)',
+                                                                                                        '').replace(
+                    'answer:', '').strip()
             out_data['qa'][batch_start_idx]['%s_prediction' % args.model] = answer
 
-        else:            
+        else:
             raise NotImplementedError
 
     return out_data
 
 
 def init_hf_model(args):
-
     if args.model == 'llama2':
         model_name = "meta-llama/Llama-2-7b-hf"
 
@@ -327,10 +326,10 @@ def init_hf_model(args):
 
     elif args.model in ['mistral-instruct-7b-8k-new']:
         model_name = "mistralai/Mistral-7B-Instruct-v0.1"
-    
+
     elif args.model in ['mistral-instruct-7b-32k-v2']:
         model_name = "mistralai/Mistral-7B-Instruct-v0.2"
-    
+
     elif args.model in ['gemma-7b-it']:
         model_name = 'google/gemma-7b-it'
 
@@ -339,14 +338,15 @@ def init_hf_model(args):
 
     else:
         raise ValueError
-    
-    hf_token = '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'
+
+    hf_token = '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'
+    huggingface_hub.login(hf_token)
 
     if args.use_4bit:
 
         print("Using 4-bit inference")
         tokenizer = AutoTokenizer.from_pretrained(model_name, token=hf_token)
-        tokenizer.pad_token_id = tokenizer.eos_token_id    # for open-ended generation
+        tokenizer.pad_token_id = tokenizer.eos_token_id  # for open-ended generation
 
         if 'gemma' in args.model:
             bnb_config = BitsAndBytesConfig(load_in_4bit=True,
@@ -361,33 +361,33 @@ def init_hf_model(args):
 
         if 'mistralai' in model_name:
             if 'v0.1' in model_name:
-                model = AutoModelForCausalLM.from_pretrained(model_name, 
-                                                            torch_dtype=torch.float16, 
-                                                            attn_implementation="flash_attention_2",
-                                                            quantization_config=bnb_config,
-                                                            device_map="auto",
-                                                            trust_remote_code=True,)
+                model = AutoModelForCausalLM.from_pretrained(model_name,
+                                                             torch_dtype=torch.float16,
+                                                             attn_implementation="flash_attention_2",
+                                                             quantization_config=bnb_config,
+                                                             device_map="auto",
+                                                             trust_remote_code=True, )
             else:
                 model = AutoModelForCausalLM.from_pretrained(model_name,
-                                                            quantization_config=bnb_config,
-                                                            device_map="auto",
-                                                            trust_remote_code=True)
-        
+                                                             quantization_config=bnb_config,
+                                                             # device_map="auto",
+                                                             trust_remote_code=True)
+
         else:
-            model = AutoModelForCausalLM.from_pretrained(model_name, 
-                                            torch_dtype=torch.float16,
-                                            quantization_config=bnb_config,
-                                            device_map="auto",
-                                            trust_remote_code=True,)
+            model = AutoModelForCausalLM.from_pretrained(model_name,
+                                                         torch_dtype=torch.float16,
+                                                         quantization_config=bnb_config,
+                                                         device_map="auto",
+                                                         trust_remote_code=True, )
 
         pipeline = transformers.pipeline(
             "text-generation",
             model=model,
             tokenizer=tokenizer,
             trust_remote_code=True,
-            device_map="auto",    # finds GPU
+            device_map="auto",  # finds GPU
         )
-    
+
     else:
         pipeline = transformers.pipeline(
             "text-generation",
@@ -396,7 +396,7 @@ def init_hf_model(args):
             device_map="auto"
         )
         # pipeline = None
-    
+
     print("Loaded model")
     return pipeline, model_name
 
